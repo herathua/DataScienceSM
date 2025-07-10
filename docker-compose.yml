@@ -2,27 +2,24 @@ version: '3.8'
 
 services:
   namenode:
-    build: ./hadoop
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
     container_name: namenode
     hostname: namenode
     environment:
-      - NODE_TYPE=namenode
       - CLUSTER_NAME=test
     ports:
       - "9870:9870"  # HDFS Web UI
-      - "9000:9000"  # HDFS NameNode
+      - "8020:8020"  # HDFS NameNode
     volumes:
       - hadoop_namenode:/hadoop/dfs/name
-      - ./hadoop/hadoop-config:/opt/hadoop/etc/hadoop
     networks:
       - hadoop-network
 
   datanode:
-    build: ./hadoop
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
     container_name: datanode
     hostname: datanode
     environment:
-      - NODE_TYPE=datanode
       - SERVICE_PRECONDITION=namenode:9870
     ports:
       - "9864:9864"  # HDFS DataNode
@@ -30,7 +27,6 @@ services:
       - namenode
     volumes:
       - hadoop_datanode:/hadoop/dfs/data
-      - ./hadoop/hadoop-config:/opt/hadoop/etc/hadoop
     networks:
       - hadoop-network
 

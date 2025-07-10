@@ -19,4 +19,4 @@ COPY spark-defaults.conf /opt/bitnami/spark/conf/
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:8080/ || exit 1
 
-CMD ["bash", "-c", "if [ $SPARK_MODE == 'master' ]; then /opt/bitnami/scripts/spark/entrypoint.sh /opt/bitnami/scripts/spark/run.sh; else /opt/bitnami/scripts/spark-worker/run.sh; fi"] 
+# No CMD override: use Bitnami's default entrypoint 
