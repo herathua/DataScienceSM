@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  namenode:
+    build: ./hadoop
+    container_name: namenode
+    hostname: namenode
+    environment:
+      - NODE_TYPE=namenode
+      - CLUSTER_NAME=test
+    ports:
+      - "9870:9870"  # HDFS Web UI
+      - "9000:9000"  # HDFS NameNode
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/name
+      - ./hadoop/hadoop-config:/opt/hadoop/etc/hadoop
+    networks:
+      - hadoop-network
+
+  datanode:
+    build: ./hadoop
+    container_name: datanode
+    hostname: datanode
+    environment:
+      - NODE_TYPE=datanode
+      - SERVICE_PRECONDITION=namenode:9870
+    ports:
+      - "9864:9864"  # HDFS DataNode
+    depends_on:
+      - namenode
+    volumes:
+      - hadoop_datanode:/hadoop/dfs/data
+      - ./hadoop/hadoop-config:/opt/hadoop/etc/hadoop
+    networks:
+      - hadoop-network
+
+  spark-master:
+    build: ./spark
+    container_name: spark-master
+    hostname: spark-master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    ports:
+      - "7077:7077"  # Spark Master
+      - "8080:8080"  # Spark Web UI
+    depends_on:
+      - namenode
+      - datanode
+    networks:
+      - hadoop-network
+
+  spark-worker:
+    build: ./spark
+    container_name: spark-worker
+    hostname: spark-worker
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=1
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    depends_on:
+      - spark-master
+    networks:
+      - hadoop-network
+
+  pig:
+    build: ./pig
+    container_name: pig
+    hostname: pig
+    stdin_open: true
+    tty: true
+    depends_on:
+      - namenode
+      - datanode
+      - spark-master
+    volumes:
+      - ./data:/data
+      - ./pig/scripts:/scripts
+    networks:
+      - hadoop-network
+
+volumes:
+  hadoop_namenode:
+  hadoop_datanode:
+
+networks:
+  hadoop-network:
+    driver: bridge 
